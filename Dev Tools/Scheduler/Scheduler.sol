@@ -70,47 +70,59 @@ contract Scheduler is SchedulerBase {
         return schedule;
     }
 
+    function verifyBounds (uint256[] memory _dates, uint256[] memory _lower, uint256[] memory _upper) internal pure returns (bool) {
 
-    function verifySchedule (bytes memory _schedule, JobTypes _jobType) internal view returns (bool verified, string memory schedule) {
+        require (_dates.length == _lower.length && _lower.length == _upper.length,
+            "Invalid parameters"
+        ); 
 
-        if (_jobType == JobTypes.Cron) {
-            verified = _schedule.length >= 5;
+        for (uint i = 0; i < _dates.length; i++) {
+
+            if (_dates[i] < _lower[i] || _dates[i] > _upper[i]) {
+                return false;
+            }
+        }
+
+        return true;
+    }   
+
+    function verifySchedule (bytes memory _schedule, JobTypes _type) internal view returns (bool verified, string memory schedule) {
+
+        if (_type == JobTypes.Cron) {
+            verified = _schedule.length >= 5; 
             schedule = string(_schedule);
         }
 
-        else if (_jobType == JobTypes.Date) {
+        else if (_type == JobTypes.Date) {
             uint256[] memory arr = abi.decode(_schedule, (uint256[]));
-            verified = arr.length == 6;
-            schedule = buildSchedule(arr); 
+            verified = verifyBounds(arr, DateLB, DateUB);
+            schedule = buildSchedule(arr);
         }
 
-        else if (_jobType == JobTypes.Date) {
+        else if (_type == JobTypes.Recurrence) {
             uint256[] memory arr = abi.decode(_schedule, (uint256[]));
-            verified = arr.length == 7; 
-            schedule = buildSchedule(arr); 
+            verified = verifyBounds (arr, ReccurenceLB, ReccurenceUB);
+            schedule = buildSchedule(arr);
         }
 
-        else if (_jobType == JobTypes.Blocktime) {
-            uint256 timestamp = abi.decode(_schedule, (uint256));
-            verified = timestamp > block.timestamp;
-            schedule = Strings.toString(timestamp); 
+        else if (_type == JobTypes.Blocktime) {
+            uint256 blocktime = abi.decode(_schedule, (uint256)); 
+            verified = blocktime > block.timestamp;
+            schedule = Strings.toString(blocktime);
         }
-
-    }
-
+    } 
 
     //Primary Functions: ------------------------------------------------
 
-    function createJob (Call[] memory _calls, JobTypes _jobType, bytes memory _schedule, address _validator) external returns (bytes32 ID) {
+    function createJob (Call[] memory _calls, bytes memory _schedule, JobTypes _type, address _validator) external returns (bytes32 ID) {
 
         (bool verified, string memory schedule) = verifySchedule(
-            _schedule, _jobType
-        );
+            _schedule, _type
+        ); 
 
-        require (verified, "Invalid schedule"); 
-        require (_calls.length >= 1, "Invalid call length");
-        require (_validator != address(this), "Invalid validator");
-        
+        require (verified, "Incorrect schedule or job type"); 
+        require (_validator != address(this), "Invalid validator"); 
+    
         ID = keccak256(abi.encodePacked(
             block.timestamp, block.number, block.prevrandao, msg.sender
         ));
@@ -120,9 +132,9 @@ contract Scheduler is SchedulerBase {
         IDToJob[ID].owner = msg.sender;
         IDToJob[ID].validator = _validator;
 
-        IDToJob[ID].jobType = _jobType;
+        IDToJob[ID].jobType = _type;
         IDToJob[ID].schedule = schedule;
-       
+        
         for (uint i = 0; i < _calls.length; i++) {
             addCall(ID, _calls[i]);
         }
@@ -219,7 +231,3 @@ contract Scheduler is SchedulerBase {
         }(""); require (success, "Transfer failed"); 
     }
 }
-
-
-
-   
