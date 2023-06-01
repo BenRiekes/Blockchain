@@ -138,6 +138,8 @@ contract Scheduler is SchedulerBase {
         for (uint i = 0; i < _calls.length; i++) {
             addCall(ID, _calls[i]);
         }
+
+        emit JobCreated (ID, msg.sender, _validator, schedule, _type, block.timestamp); 
     }
 
     function fulfillJob (bytes32 _jobID) external Auth (_jobID, false) {
@@ -175,6 +177,8 @@ contract Scheduler is SchedulerBase {
             response: responses,
             timestamp: block.timestamp
         })); 
+
+        emit JobFulfilled (_jobID, msg.sender, successes, responses, block.timestamp);
     } 
 
     //Secondary Functions ------------------------------------------------
