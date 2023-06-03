@@ -124,7 +124,7 @@ contract Scheduler is SchedulerBase {
             "Unauthorized"
         );
 
-        require (Subscription[IDToJob[_jobID].owner] >= getJobFunding(_jobID),
+        require (address(this).balance >= getJobFunding(_jobID) && Subscription[IDToJob[_jobID].owner] >= getJobFunding(_jobID),
             "Insufficient funds"
         );
 
