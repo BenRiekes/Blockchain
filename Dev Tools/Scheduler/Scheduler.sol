@@ -78,17 +78,14 @@ contract Scheduler is SchedulerBase {
         } else if (_type == JobTypes.Blocktime) {
             verified = num > block.timestamp;
 
-        } else { verified = true;
+        } else { 
             
-            (uint256[] memory LB, uint256[] memory UB) = _type == JobTypes.Date ? 
-                (DateLB, DateUB) : (ReccurenceLB, ReccurenceUB)
-            ;
-
             for (uint i = 0; i < numArr.length; i++) {
 
-                if (numArr[i] < LB[i] || numArr[i] > UB[i]) {
-                    verified = false;
-                }
+                verified = _type == JobTypes.Date ?
+                    (numArr[i] > DateLB[i] && numArr[i] < DateUB[i]) :
+                    (numArr[i] > ReccurenceLB[i] && numArr[i] < ReccurenceUB[i])
+                ; 
             }
         }
 
