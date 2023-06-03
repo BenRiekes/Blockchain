@@ -20,7 +20,7 @@ contract Scheduler is SchedulerBase {
 
     //Getter Functions: -------------------------------------------------------------------
 
-    function getFulfillment (bytes32 _jobID, uint256 _index) external view returns (bool[] memory success, bytes[] memory resonse, uint256 timestamp) {
+    function getFulfillment (bytes32 _jobID, uint256 _index) external view returns (bool[] memory success, bytes[] memory response, uint256 timestamp) {
 
         Fulfillment memory fulfillment = IDToJob[_jobID].fulfillments[_index];
         return (fulfillment.success, fulfillment.response, fulfillment.timestamp); 
